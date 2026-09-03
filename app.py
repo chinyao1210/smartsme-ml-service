@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import joblib
 import numpy as np
@@ -10,6 +11,8 @@ import pandas as pd
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+
+BUSINESS_TIME_ZONE = ZoneInfo("Asia/Kuala_Lumpur")
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_FILE = Path(
@@ -209,6 +212,10 @@ def get_feature_value(name, item_id, current_stock, history, date_value, trend, 
         "lag_3": lag(history, 3),
         "lag_7": lag(history, 7),
         "lag_14": lag(history, 14),
+        "rolling_3": average(history, 3),
+        "rolling_7": average(history, 7),
+        "rolling_14": average(history, 14),
+        "rolling_30": average(history, 30),
         "rolling_mean_3": average(history, 3),
         "rolling_mean_7": average(history, 7),
         "rolling_mean_14": average(history, 14),
@@ -311,7 +318,7 @@ def forecast(item_id, current_stock, daily_sales, forecast_days, safety_days):
         history.insert(0, 0.0)
 
     predictions = []
-    today = datetime.now().date()
+    today = datetime.now(BUSINESS_TIME_ZONE).date()
 
     for step in range(1, forecast_days + 1):
         date_value = today + timedelta(days=step)
